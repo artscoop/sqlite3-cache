@@ -460,10 +460,11 @@ class Cache:
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             @wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> Callable[..., Any]:
-                result = self.get(f"{func}-{args}-{kwargs}", obj)
+                key: str = f"{func.__module__}.{func.__qualname__}-{hash(str(args))}-{hash(str(kwargs))}"
+                result = self.get(key, obj)
                 if result == obj:
                     result = func(*args, **kwargs)
-                    self.set(f"{func}-{args}-{kwargs}", result, timeout)
+                    self.set(key, result, timeout)
                 return result
 
             return wrapper
