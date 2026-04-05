@@ -1,6 +1,6 @@
 [project]
 name = "sqlite3-cache"
-version = "0.2.2"
+version = "0.2.3"
 description = "Use SQLite3 as cache."
 authors = [
     { name = "Matti Lamppu", email = "lamppu.matti.akseli@gmail.com" },
