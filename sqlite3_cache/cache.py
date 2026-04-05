@@ -5,6 +5,7 @@ import pickle
 import sqlite3
 from contextlib import suppress
 from functools import wraps
+from hashlib import sha1
 from pathlib import Path
 from threading import local
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
@@ -448,6 +449,14 @@ class Cache:
         self._con.commit()
         return new_value
 
+    @staticmethod
+    def func_cache_key(func: Callable[..., Any], *args: Any, **kwargs: Any) -> str:
+        """Compute a stable cache key for a function call."""
+        args_hash: str = sha1(str(args).encode()).hexdigest()
+        kwargs_hash: str = sha1(str(kwargs).encode()).hexdigest()
+        key: str = f"{func.__module__}.{func.__qualname__}-{args_hash}-{kwargs_hash}"
+        return key
+
     def memoize(self, timeout: int = DEFAULT_TIMEOUT) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """
         Save the result of the decorated function in cache. Calls with different
@@ -460,7 +469,7 @@ class Cache:
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             @wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> Callable[..., Any]:
-                key: str = f"{func.__module__}.{func.__qualname__}-{hash(str(args))}-{hash(str(kwargs))}"
+                key: str = self.func_cache_key(func, *args, **kwargs)
                 result = self.get(key, obj)
                 if result == obj:
                     result = func(*args, **kwargs)
